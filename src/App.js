@@ -64,18 +64,21 @@ const DynamicSADFormBuilder = () => {
     }
     
     const formElement = formRef.current;
+    // Temporarily remove box-shadow for cleaner capture
+    const originalShadow = formElement.style.boxShadow;
+    formElement.style.boxShadow = 'none';
+
     const currentConfig = formConfigs[selectedForm];
     const filename = `SAD-Form-${currentConfig.formId}.png`;
 
     html2canvas(formElement, {
-      scale: 2, // Capture at 2x resolution for better quality
+      scale: 2,
       useCORS: true,
-      backgroundColor: '#ffffff', // Explicitly set background to white
-      onclone: (document) => {
-        // Ensure borders are rendered correctly during capture
-        document.getElementById('form-container').style.boxShadow = 'none';
-      }
+      backgroundColor: '#ffffff',
     }).then(canvas => {
+      // Restore box-shadow after capture
+      formElement.style.boxShadow = originalShadow;
+
       const image = canvas.toDataURL('image/png');
       const link = document.createElement('a');
       link.href = image;
@@ -84,6 +87,8 @@ const DynamicSADFormBuilder = () => {
       link.click();
       document.body.removeChild(link);
     }).catch(error => {
+      // Restore box-shadow in case of error
+      formElement.style.boxShadow = originalShadow;
       console.error('Error exporting to PNG:', error);
       alert('Could not export the form as PNG. Please check the console for details.');
     });
@@ -101,7 +106,6 @@ const DynamicSADFormBuilder = () => {
     } catch (error) { alert('Invalid JSON format'); }
   };
 
-  // The renderForm functions are unchanged.
   const renderFormA = (config, editable = false) => {
     const { fields } = config;
     
@@ -234,8 +238,204 @@ const DynamicSADFormBuilder = () => {
       </div>
     );
   };
-  const renderFormB = (config, editable = false) => { return <div>Form B Content</div>; };
-  const renderFormC = (config, editable = false) => { return <div>Form C Content</div>; };
+
+  const renderFormB = (config, editable = false) => {
+    const { fields } = config;
+    return (
+      <div className="space-y-6">
+        <div className="space-y-2">
+          {['id', 'name', 'description', 'source', 'destination', 'dataStructure', 'volumeTime'].map(field => (
+            <div key={field} className="flex">
+              <span className="font-bold w-40 capitalize">{field.replace(/([A-Z])/g, ' $1')}</span>
+              {editable ? (
+                field === 'description' ? (
+                  <textarea
+                    value={fields[field]}
+                    onChange={(e) => updateFormConfig('B', { ...config, fields: { ...fields, [field]: e.target.value } })}
+                    className="flex-1 px-2 py-1 border border-gray-300 rounded h-20"
+                  />
+                ) : (
+                  <input
+                    type="text"
+                    value={fields[field]}
+                    onChange={(e) => updateFormConfig('B', { ...config, fields: { ...fields, [field]: e.target.value } })}
+                    className="flex-1 px-2 py-1 border border-gray-300 rounded"
+                  />
+                )
+              ) : (
+                <span className="flex-1">{fields[field]}</span>
+              )}
+            </div>
+          ))}
+        </div>
+
+        <div className="flex">
+          <span className="font-bold w-40">Type of data flow</span>
+          <div className="grid grid-cols-2 gap-x-8 gap-y-2 flex-1">
+            {Object.entries(fields.dataFlowTypes).map(([type, checked]) => (
+              <div key={type} className="flex items-center">
+                {editable ? (
+                  <input
+                    type="checkbox"
+                    checked={checked}
+                    onChange={(e) => updateFormConfig('B', { ...config, fields: { ...fields, dataFlowTypes: { ...fields.dataFlowTypes, [type]: e.target.checked } } })}
+                    className="mr-2 h-4 w-4 rounded text-blue-600 focus:ring-blue-500"
+                  />
+                ) : (
+                  <div className={`w-4 h-4 border-2 mr-2 flex items-center justify-center rounded-sm ${ checked ? 'bg-blue-600 border-blue-600' : 'bg-white border-gray-400' }`}>
+                    {checked && <span className="text-white text-xs font-bold">✓</span>}
+                  </div>
+                )}
+                <label className="text-sm capitalize">{type}</label>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="flex">
+          <span className="font-bold w-40">Comments</span>
+          {editable ? (
+            <textarea
+              value={fields.comments}
+              onChange={(e) => updateFormConfig('B', { ...config, fields: { ...fields, comments: e.target.value } })}
+              className="w-full flex-1 px-2 py-1 border border-gray-300 rounded h-20"
+            />
+          ) : (
+            <p className="flex-1">{fields.comments}</p>
+          )}
+        </div>
+      </div>
+    );
+  };
+
+  const renderFormC = (config, editable = false) => {
+    const { fields } = config;
+    return (
+      <div className="space-y-6">
+        <div className="space-y-2">
+          {['id', 'name', 'alias', 'description'].map(field => (
+            <div key={field} className="flex">
+              <span className="font-bold w-40 capitalize">{field}</span>
+              {editable ? (
+                field === 'description' ? (
+                  <textarea
+                    value={Array.isArray(fields[field]) ? fields[field].join(', ') : fields[field]}
+                    onChange={(e) => updateFormConfig('C', { ...config, fields: { ...fields, [field]: field === 'alias' ? e.target.value.split(',').map(s => s.trim()) : e.target.value } })}
+                    className="flex-1 px-2 py-1 border border-gray-300 rounded h-20"
+                  />
+                ) : (
+                  <input
+                    type="text"
+                    value={Array.isArray(fields[field]) ? fields[field].join(', ') : fields[field]}
+                    onChange={(e) => updateFormConfig('C', { ...config, fields: { ...fields, [field]: field === 'alias' ? e.target.value.split(',').map(s => s.trim()) : e.target.value } })}
+                    className="flex-1 px-2 py-1 border border-gray-300 rounded"
+                  />
+                )
+              ) : (
+                <span className="flex-1">
+                  {Array.isArray(fields[field]) ? fields[field].join(', ') : fields[field]}
+                </span>
+              )}
+            </div>
+          ))}
+        </div>
+
+        <div>
+          <h3 className="text-xl font-bold text-blue-600 mb-4">Data Store Characteristics</h3>
+          <div className="space-y-2">
+            {Object.entries(fields.dataStoreCharacteristics).map(([key, value]) => (
+              <div key={key} className="flex items-center">
+                <span className="font-bold w-40 capitalize">{key.replace(/([A-Z])/g, ' $1')}</span>
+                {editable ? (
+                  <input
+                    type="text"
+                    value={value}
+                    onChange={(e) => updateFormConfig('C', { ...config, fields: { ...fields, dataStoreCharacteristics: { ...fields.dataStoreCharacteristics, [key]: e.target.value } } })}
+                    className="flex-1 px-2 py-1 border border-gray-300 rounded"
+                  />
+                ) : (
+                  <span>{value}</span>
+                )}
+              </div>
+            ))}
+          </div>
+          
+          <div className="mt-4 flex">
+            <span className="font-bold w-40">Access Types</span>
+            <div className="flex flex-wrap gap-x-8 gap-y-2 flex-1">
+              {Object.entries(fields.accessTypes).map(([type, checked]) => (
+                <div key={type} className="flex items-center">
+                  {editable ? (
+                    <input
+                      type="checkbox"
+                      checked={checked}
+                      onChange={(e) => updateFormConfig('C', { ...config, fields: { ...fields, accessTypes: { ...fields.accessTypes, [type]: e.target.checked } } })}
+                      className="mr-2 h-4 w-4 rounded text-blue-600 focus:ring-blue-500"
+                    />
+                  ) : (
+                    <div className={`w-4 h-4 border-2 mr-2 flex items-center justify-center rounded-sm ${ checked ? 'bg-blue-600 border-blue-600' : 'bg-white border-gray-400' }`}>
+                      {checked && <span className="text-white text-xs font-bold">✓</span>}
+                    </div>
+                  )}
+                  <label className="text-sm capitalize">{type}</label>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          {['dataSetName', 'copyMember', 'structure', 'primaryKey'].map(field => (
+            <div key={field} className="flex items-center">
+              <span className="font-bold w-40 capitalize">{field.replace(/([A-Z])/g, ' $1')}</span>
+              {editable ? (
+                <input
+                  type="text"
+                  value={fields[field]}
+                  onChange={(e) => updateFormConfig('C', { ...config, fields: { ...fields, [field]: e.target.value } })}
+                  className="flex-1 px-2 py-1 border border-gray-300 rounded"
+                />
+              ) : (
+                <span>{fields[field]}</span>
+              )}
+            </div>
+          ))}
+          
+          <div className="flex">
+            <span className="font-bold w-40 pt-1">Secondary Keys</span>
+            {editable ? (
+              <input
+                type="text"
+                value={fields.secondaryKeys.join(', ')}
+                onChange={(e) => updateFormConfig('C', { ...config, fields: { ...fields, secondaryKeys: e.target.value.split(',').map(s => s.trim()) } })}
+                className="flex-1 px-2 py-1 border border-gray-300 rounded"
+                placeholder="key one, key two, ..."
+              />
+            ) : (
+              <div>
+                {fields.secondaryKeys.map((key, idx) => (
+                  <div key={idx}>{idx + 1}. {key}</div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="flex">
+          <span className="font-bold w-40 pt-1">Comments</span>
+          {editable ? (
+            <textarea
+              value={fields.comments}
+              onChange={(e) => updateFormConfig('C', { ...config, fields: { ...fields, comments: e.target.value } })}
+              className="w-full flex-1 px-2 py-1 border border-gray-300 rounded h-20"
+            />
+          ) : (
+            <p className="flex-1">{fields.comments}</p>
+          )}
+        </div>
+      </div>
+    );
+  };
 
   const renderCurrentForm = (editable = false) => {
     const config = formConfigs[selectedForm];
