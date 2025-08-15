@@ -1,70 +1,22 @@
-# Getting Started with Create React App
+## Form Renderer for System Analysis and Design Course
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+<img width="700" height="685" alt="image" src="https://github.com/user-attachments/assets/4636a131-629f-4391-945d-9f298ba9a484" />
 
-## Available Scripts
+### Usage
+- Clone the repository
+- run ```npm install``` to install necessary dependencies
+- Add your form information in src/data/forms.json file [See **Adding Form Data** section below]
+- Start the app with ```npm run start```
+- Use the dropdown to select which form to render
 
-In the project directory, you can run:
+### Adding Form Data
+There are 3 types of forms:
+- Type A: Data Element description form
+- Type B: Data flow description form
+- Type C: Data Store description form
 
-### `npm start`
+In order to modify the form, values go to the forms.json file and edit the details. In order to add a new form, you can just copy and paste one of the samples, and make sure to update the formId. However, if you want to add a new field or remove the current ones, or even change the whole form schema, make sure you also update the ```FormTypeA.jsx```, ```FormTypeB.jsx``` or ```FormTypeC.jsx``` files in the ```src/components``` folder.
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+### Changing the design
+I've used tailwindcss to style the forms, you can directly modify them in the ```FormType{}.jsx``` files. Additionally, if you want to style things your own way, you can use the ```formStyles.css``` file. Be sure to uncomment the ```import "./formStyles.css";``` at the top of the corresponding ```FormType{}.jsx``` file. 
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
-
-### `npm test`
-
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
-
-### `npm run build`
-
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
-
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
-
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
-
-### `npm run eject`
-
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
-
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
-
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
-
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
-
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
-
-### Code Splitting
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
-
-### Analyzing the Bundle Size
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
