@@ -1,0 +1,127 @@
+[
+  {
+    "id": "A1",
+    "type": "A",
+    "title": "Element Description Form",
+    "sections": {
+      "header": [
+        { "label": "Name", "value": "Member ID" },
+        { "label": "Alias", "value": "Student ID" },
+        { "label": "Alias", "value": "IUT ID Number" },
+        {
+          "label": "Description",
+          "value": "Unique identifier for each registered IUTCS member, matching their official IUT-issued Student ID; links all system records to the correct member profile."
+        }
+      ],
+      "characteristics": {
+        "length": "9",
+        "inputFormat": "999999999",
+        "outputFormat": "999999999",
+        "defaultValue": "",
+        "flags": {
+          "alphabetic": false,
+          "alphanumeric": false,
+          "date": false,
+          "numeric": true,
+          "continuous": false,
+          "discrete": true,
+          "base": true,
+          "derived": false
+        }
+      },
+      "validation": {
+        "rows": [
+          {
+            "limit": "Upper",
+            "continuous": "",
+            "discrete": "9-digit format",
+            "meaning": "Exactly 9 digits, no spaces or letters"
+          },
+          {
+            "limit": "",
+            "continuous": "",
+            "discrete": "Exists in DB",
+            "meaning": "Must exist in Member Record database"
+          },
+          {
+            "limit": "Lower",
+            "continuous": "",
+            "discrete": "",
+            "meaning": ""
+          }
+        ]
+      },
+      "comments": "Member ID must already exist in the official IUT Student Record system. Fixed length ensures faster searching, validation, and matching of records."
+    }
+  },
+
+
+  {
+    "id": "B1",
+    "type": "B",
+    "title": "Data Flow Description",
+    "sections": {
+      "header": [
+        { "label": "ID", "value": "DF-01" },
+        { "label": "Name", "value": "Task Assignment Request" },
+        {
+          "label": "Description",
+          "value": "Contains details of tasks assigned by the Team Lead, including task title, description, assignee(s), deadlines, and priority level, which will be stored and tracked in the Task Database."
+        }
+      ],
+      "characteristics": {
+        "source": "Team Lead",
+        "destination": "Assign Tasks (Process 1 in Diagram 0)",
+        "structure": "Task Details",
+        "volume": "5-8 assignments per event cycle",
+        "flags": {
+          "Discrete": false,
+          "Screen": true,
+          "Report": false,
+          "Form": false,
+          "Internal": false
+        }
+      },
+      "comments": "Task assignment requests are submitted through the system’s executive dashboard interface. Upon submission, the data is validated, assigned a unique task_id, and stored in the Task Database. The process also triggers downstream flows for notifications and task monitoring."
+    }
+  },
+
+
+  {
+    "id": "C1",
+    "type": "C",
+    "title": "Data Store Description Form",
+    "sections": {
+      "header": [
+        { "label": "ID", "value": "D1" },
+        { "label": "Name", "value": "Task Database" },
+        { "label": "Alias", "value": "Task DB, Assignment Records" },
+        {
+          "label": "Description",
+          "value": "Contains a record for each task assigned within IUTCS. Stores task header details (task_id, title, description, creator, create date, due date/time, priority, status) and links to assigned members and notifications. Used by Processes 1 (Assign Tasks), 2 (View & Complete Task), and 4 (Notify) in DFD-0."
+        }
+      ],
+      "characteristics": {
+        "fileType": "Computer",
+        "fileFormat": "Database",
+        "recordSize": "720",
+        "numRecords": "10000 (Maximum)",
+        "average": "2000",
+        "percentageGrowth": "15%",
+        "blockSize": "4096",
+        "flags1": {
+          "Manual": false,
+          "Indexed": true,
+          "Sequential" : false,
+          "Direct": true
+        },
+        "dataSetName": "Task.MST",
+        "copyMember": "TaskMaster",
+        "structure": "Task Assignment Request",
+        "primaryKey": "Task ID",
+        "secondaryKey": ["Member Id", "Due date", "Status", "Priority Level"]
+      },
+      "comments": "Active records retained for 3 academic years, then archived to history storage. Weekly incremental and monthly full backups recommended. Edit access limited to Executive/Team Leads and System Admin; members have read/update status on tasks assigned to them. Indices on (member_id) and (due_date, status) support reminders and dashboards."
+    }
+  }
+]
