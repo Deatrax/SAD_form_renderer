@@ -109,62 +109,120 @@ const DynamicSADFormBuilder = () => {
     if (!formRef.current) return;
     
     try {
-      // Create a new window for printing
+      const element = formRef.current;
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      
+      // Set canvas size based on element dimensions
+      const rect = element.getBoundingClientRect();
+      canvas.width = rect.width * 2; // Higher resolution
+      canvas.height = rect.height * 2;
+      
+      // Scale the context to match the higher resolution
+      ctx.scale(2, 2);
+      
+      // Create a white background
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      
+      // Use html2canvas alternative - create an SVG representation
+      const svgData = new XMLSerializer().serializeToString(element);
+      const img = new Image();
+      
+      // For now, let's use a simpler approach with window.print but with better styling
       const printWindow = window.open('', '_blank');
+      const currentConfig = formConfigs[selectedForm];
+      
       printWindow.document.write(`
+        <!DOCTYPE html>
         <html>
           <head>
-            <title>SAD Form - ${formConfigs[selectedForm].title}</title>
+            <title>SAD Form - ${currentConfig.title}</title>
             <style>
+              * { box-sizing: border-box; margin: 0; padding: 0; }
               body { 
-                font-family: Arial, sans-serif; 
-                margin: 20px; 
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', Arial, sans-serif;
+                line-height: 1.4;
+                color: #000;
                 background: white;
-                color: black;
+                padding: 20px;
               }
               .form-container {
                 max-width: 800px;
+                margin: 0 auto;
                 border: 2px solid #3b82f6;
                 border-radius: 8px;
-                padding: 20px;
+                padding: 24px;
                 background: white;
+                position: relative;
               }
               .form-title {
                 color: #3b82f6;
                 font-size: 24px;
                 font-weight: bold;
-                margin-bottom: 20px;
+                margin-bottom: 24px;
+                margin-top: 32px;
               }
               .section-title {
                 color: #3b82f6;
                 font-size: 18px;
                 font-weight: bold;
-                margin: 20px 0 10px 0;
+                margin: 24px 0 16px 0;
               }
               .field-row {
                 display: flex;
-                margin-bottom: 8px;
+                margin-bottom: 12px;
+                align-items: flex-start;
               }
               .field-label {
                 font-weight: bold;
-                min-width: 150px;
+                min-width: 160px;
                 margin-right: 20px;
+                flex-shrink: 0;
+              }
+              .field-value {
+                flex: 1;
+                word-wrap: break-word;
               }
               .checkbox-group {
+                margin-left: 160px;
+                margin-top: 8px;
+              }
+              .checkbox-item {
                 display: flex;
-                flex-wrap: wrap;
-                gap: 15px;
-                margin-left: 20px;
+                align-items: center;
+                margin-bottom: 4px;
+              }
+              .checkbox {
+                width: 16px;
+                height: 16px;
+                border: 2px solid #333;
+                margin-right: 8px;
+                position: relative;
+                flex-shrink: 0;
+              }
+              .checkbox.checked {
+                background: #3b82f6;
+                border-color: #3b82f6;
+              }
+              .checkbox.checked::after {
+                content: '✓';
+                position: absolute;
+                color: white;
+                font-size: 12px;
+                top: -2px;
+                left: 2px;
               }
               .validation-table {
                 width: 100%;
                 border-collapse: collapse;
-                margin: 10px 0;
+                margin: 16px 0;
               }
               .validation-table th, .validation-table td {
-                border: 1px solid #ccc;
+                border: 1px solid #333;
                 padding: 8px;
                 text-align: left;
+                vertical-align: top;
               }
               .validation-table th {
                 background: #f5f5f5;
@@ -172,40 +230,249 @@ const DynamicSADFormBuilder = () => {
               }
               .dropdown-container {
                 position: absolute;
-                top: 20px;
-                left: 20px;
+                top: 8px;
+                left: 8px;
               }
               .dropdown {
-                padding: 8px 12px;
+                padding: 4px 8px;
                 border: 2px solid #3b82f6;
                 border-radius: 4px;
                 background: white;
                 color: #3b82f6;
                 font-weight: bold;
+                font-size: 14px;
               }
+              .space-y-6 > * + * { margin-top: 24px; }
+              .space-y-2 > * + * { margin-top: 8px; }
+              .space-y-1 > * + * { margin-top: 4px; }
               @media print {
-                .no-print { display: none !important; }
-                body { margin: 0; }
+                body { margin: 0; padding: 10px; }
+                .form-container { border: 1px solid #000; }
               }
             </style>
           </head>
           <body>
-            ${formRef.current.innerHTML}
+            <div class="form-container">
+              <div class="dropdown-container">
+                <div class="dropdown">${currentConfig.formId}</div>
+              </div>
+              <div class="form-title">${currentConfig.title}</div>
+              ${generatePrintContent(currentConfig, selectedForm)}
+            </div>
           </body>
         </html>
       `);
       printWindow.document.close();
       
-      // Wait a moment for content to load, then print
       setTimeout(() => {
         printWindow.print();
         printWindow.close();
-      }, 500);
+      }, 1000);
       
     } catch (error) {
       console.error('Export error:', error);
       alert('Export failed. Please try using your browser\'s print function.');
     }
+  };
+
+  const generatePrintContent = (config, formType) => {
+    const { fields } = config;
+    
+    if (formType === 'A') {
+      return `
+        <div class="space-y-6">
+          <div class="space-y-2">
+            <div class="field-row">
+              <span class="field-label">Name:</span>
+              <span class="field-value">${fields.name}</span>
+            </div>
+            ${fields.alias.map(alias => `
+              <div class="field-row">
+                <span class="field-label">Alias:</span>
+                <span class="field-value">${alias}</span>
+              </div>
+            `).join('')}
+            <div class="field-row">
+              <span class="field-label">Description:</span>
+              <span class="field-value">${fields.description}</span>
+            </div>
+          </div>
+
+          <div>
+            <div class="section-title">Element Characteristics</div>
+            <div class="space-y-2">
+              ${Object.entries(fields.elementCharacteristics).map(([key, value]) => `
+                <div class="field-row">
+                  <span class="field-label">${key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}:</span>
+                  <span class="field-value">${value}</span>
+                </div>
+              `).join('')}
+            </div>
+            
+            <div class="field-row" style="margin-top: 16px;">
+              <span class="field-label">Data Types:</span>
+            </div>
+            <div class="checkbox-group">
+              ${Object.entries(fields.dataTypes).map(([type, checked]) => `
+                <div class="checkbox-item">
+                  <div class="checkbox ${checked ? 'checked' : ''}"></div>
+                  <span>${type}</span>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+
+          <div>
+            <div class="section-title">Validation Criteria</div>
+            <table class="validation-table">
+              <thead>
+                <tr>
+                  <th>Limit</th>
+                  <th>Continuous</th>
+                  <th>Discrete</th>
+                  <th>Meaning</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>Upper</strong></td>
+                  <td></td>
+                  <td>${fields.validationCriteria.upper.map(item => item.discrete).join(', ')}</td>
+                  <td>${fields.validationCriteria.upper.map(item => item.meaning).join(', ')}</td>
+                </tr>
+                <tr>
+                  <td><strong>Lower</strong></td>
+                  <td></td>
+                  <td></td>
+                  <td></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div>
+            <div class="field-row">
+              <span class="field-label">Comments:</span>
+              <span class="field-value">${fields.comments}</span>
+            </div>
+          </div>
+        </div>
+      `;
+    } else if (formType === 'B') {
+      return `
+        <div class="space-y-6">
+          <div class="space-y-2">
+            ${['id', 'name', 'description', 'source', 'destination', 'dataStructure', 'volumeTime'].map(field => `
+              <div class="field-row">
+                <span class="field-label">${field.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}:</span>
+                <span class="field-value">${fields[field]}</span>
+              </div>
+            `).join('')}
+          </div>
+
+          <div>
+            <div class="field-row">
+              <span class="field-label">Type of data flow:</span>
+            </div>
+            <div class="checkbox-group">
+              ${Object.entries(fields.dataFlowTypes).map(([type, checked]) => `
+                <div class="checkbox-item">
+                  <div class="checkbox ${checked ? 'checked' : ''}"></div>
+                  <span>${type}</span>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+
+          <div>
+            <div class="field-row">
+              <span class="field-label">Comments:</span>
+              <span class="field-value">${fields.comments}</span>
+            </div>
+          </div>
+        </div>
+      `;
+    } else if (formType === 'C') {
+      return `
+        <div class="space-y-6">
+          <div class="space-y-2">
+            <div class="field-row">
+              <span class="field-label">ID:</span>
+              <span class="field-value">${fields.id}</span>
+            </div>
+            <div class="field-row">
+              <span class="field-label">Name:</span>
+              <span class="field-value">${fields.name}</span>
+            </div>
+            <div class="field-row">
+              <span class="field-label">Alias:</span>
+              <span class="field-value">${fields.alias.join(', ')}</span>
+            </div>
+            <div class="field-row">
+              <span class="field-label">Description:</span>
+              <span class="field-value">${fields.description}</span>
+            </div>
+          </div>
+
+          <div>
+            <div class="section-title">Data Store Characteristics</div>
+            <div class="space-y-2">
+              ${Object.entries(fields.dataStoreCharacteristics).map(([key, value]) => `
+                <div class="field-row">
+                  <span class="field-label">${key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}:</span>
+                  <span class="field-value">${value}</span>
+                </div>
+              `).join('')}
+            </div>
+            
+            <div class="field-row" style="margin-top: 16px;">
+              <span class="field-label">Access Types:</span>
+            </div>
+            <div class="checkbox-group">
+              ${Object.entries(fields.accessTypes).map(([type, checked]) => `
+                <div class="checkbox-item">
+                  <div class="checkbox ${checked ? 'checked' : ''}"></div>
+                  <span>${type}</span>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+
+          <div class="space-y-2">
+            <div class="field-row">
+              <span class="field-label">Data Set Name:</span>
+              <span class="field-value">${fields.dataSetName}</span>
+            </div>
+            <div class="field-row">
+              <span class="field-label">Copy Member:</span>
+              <span class="field-value">${fields.copyMember}</span>
+            </div>
+            <div class="field-row">
+              <span class="field-label">Structure:</span>
+              <span class="field-value">${fields.structure}</span>
+            </div>
+            <div class="field-row">
+              <span class="field-label">Primary Key:</span>
+              <span class="field-value">${fields.primaryKey}</span>
+            </div>
+            <div class="field-row">
+              <span class="field-label">Secondary Keys:</span>
+              <div class="field-value">
+                ${fields.secondaryKeys.map((key, idx) => `<div>${idx + 1}. ${key}</div>`).join('')}
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <div class="field-row">
+              <span class="field-label">Comments:</span>
+              <span class="field-value">${fields.comments}</span>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+    return '';
   };
 
   const updateFormConfig = (formType, newConfig) => {
@@ -318,26 +585,33 @@ const DynamicSADFormBuilder = () => {
           </div>
           
           <div className="mt-4">
-            <span className="font-bold">Default Value:</span>
+            <span className="font-bold">Data Types:</span>
             <div className="ml-4 mt-2 space-y-1">
               {Object.entries(fields.dataTypes).map(([type, checked]) => (
                 <div key={type} className="flex items-center">
-                  <input
-                    type="checkbox"
-                    checked={checked}
-                    onChange={(e) => updateFormConfig('A', {
-                      ...config,
-                      fields: {
-                        ...fields,
-                        dataTypes: {
-                          ...fields.dataTypes,
-                          [type]: e.target.checked
+                  {editable ? (
+                    <input
+                      type="checkbox"
+                      checked={checked}
+                      onChange={(e) => updateFormConfig('A', {
+                        ...config,
+                        fields: {
+                          ...fields,
+                          dataTypes: {
+                            ...fields.dataTypes,
+                            [type]: e.target.checked
+                          }
                         }
-                      }
-                    })}
-                    disabled={!editable}
-                    className="mr-2"
-                  />
+                      })}
+                      className="mr-2"
+                    />
+                  ) : (
+                    <div className={`w-4 h-4 border-2 border-gray-400 mr-2 flex items-center justify-center ${
+                      checked ? 'bg-blue-600 border-blue-600' : 'bg-white'
+                    }`}>
+                      {checked && <span className="text-white text-xs">✓</span>}
+                    </div>
+                  )}
                   <label className="text-sm">{type}</label>
                 </div>
               ))}
@@ -440,22 +714,29 @@ const DynamicSADFormBuilder = () => {
           <div className="ml-4 mt-2 space-y-1">
             {Object.entries(fields.dataFlowTypes).map(([type, checked]) => (
               <div key={type} className="flex items-center">
-                <input
-                  type="checkbox"
-                  checked={checked}
-                  onChange={(e) => updateFormConfig('B', {
-                    ...config,
-                    fields: {
-                      ...fields,
-                      dataFlowTypes: {
-                        ...fields.dataFlowTypes,
-                        [type]: e.target.checked
+                {editable ? (
+                  <input
+                    type="checkbox"
+                    checked={checked}
+                    onChange={(e) => updateFormConfig('B', {
+                      ...config,
+                      fields: {
+                        ...fields,
+                        dataFlowTypes: {
+                          ...fields.dataFlowTypes,
+                          [type]: e.target.checked
+                        }
                       }
-                    }
-                  })}
-                  disabled={!editable}
-                  className="mr-2"
-                />
+                    })}
+                    className="mr-2"
+                  />
+                ) : (
+                  <div className={`w-4 h-4 border-2 border-gray-400 mr-2 flex items-center justify-center ${
+                    checked ? 'bg-blue-600 border-blue-600' : 'bg-white'
+                  }`}>
+                    {checked && <span className="text-white text-xs">✓</span>}
+                  </div>
+                )}
                 <label className="text-sm capitalize">{type}</label>
               </div>
             ))}
@@ -555,28 +836,38 @@ const DynamicSADFormBuilder = () => {
             ))}
           </div>
           
-          <div className="mt-4 flex flex-wrap gap-4">
-            {Object.entries(fields.accessTypes).map(([type, checked]) => (
-              <div key={type} className="flex items-center">
-                <input
-                  type="checkbox"
-                  checked={checked}
-                  onChange={(e) => updateFormConfig('C', {
-                    ...config,
-                    fields: {
-                      ...fields,
-                      accessTypes: {
-                        ...fields.accessTypes,
-                        [type]: e.target.checked
-                      }
-                    }
-                  })}
-                  disabled={!editable}
-                  className="mr-2"
-                />
-                <label className="text-sm capitalize">{type}</label>
-              </div>
-            ))}
+          <div className="mt-4">
+            <span className="font-bold">Access Types:</span>
+            <div className="ml-4 mt-2 flex flex-wrap gap-4">
+              {Object.entries(fields.accessTypes).map(([type, checked]) => (
+                <div key={type} className="flex items-center">
+                  {editable ? (
+                    <input
+                      type="checkbox"
+                      checked={checked}
+                      onChange={(e) => updateFormConfig('C', {
+                        ...config,
+                        fields: {
+                          ...fields,
+                          accessTypes: {
+                            ...fields.accessTypes,
+                            [type]: e.target.checked
+                          }
+                        }
+                      })}
+                      className="mr-2"
+                    />
+                  ) : (
+                    <div className={`w-4 h-4 border-2 border-gray-400 mr-2 flex items-center justify-center ${
+                      checked ? 'bg-blue-600 border-blue-600' : 'bg-white'
+                    }`}>
+                      {checked && <span className="text-white text-xs">✓</span>}
+                    </div>
+                  )}
+                  <label className="text-sm capitalize">{type}</label>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
 
@@ -719,9 +1010,9 @@ const DynamicSADFormBuilder = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {(currentView === 'preview' || currentView === 'edit') && (
           <div className="max-w-4xl mx-auto">
-            <div className="bg-white border-2 border-blue-500 rounded-lg p-8" ref={formRef}>
+            <div className="bg-white border-2 border-blue-500 rounded-lg p-8 relative" ref={formRef}>
               {/* Form Type Selector (mimicking original dropdown) */}
-              <div className="absolute top-2 left-2 no-print">
+              <div className="absolute top-2 left-2">
                 <select 
                   value={selectedForm + '1'}
                   onChange={(e) => setSelectedForm(e.target.value.charAt(0))}
