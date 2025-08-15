@@ -1,22 +1,64 @@
-## Form Renderer for System Analysis and Design Course
+# SAD Form Builder
 
-<img width="700" height="685" alt="image" src="https://github.com/user-attachments/assets/4636a131-629f-4391-945d-9f298ba9a484" />
+**Original Creator:** [SAD Form Builder](https://www.google.com/search?q=https://github.com/your-original-repo-link)
+*Modified by Claude and Gemini*
 
-### Usage
-- Clone the repository
-- run ```npm install``` to install necessary dependencies
-- Add your form information in src/data/forms.json file [See **Adding Form Data** section below]
-- Start the app with ```npm run start```
-- Use the dropdown to select which form to render
+This is a dynamic web application built with React that allows you to view, edit, and generate forms for a System Analysis and Design (SAD) document. It provides three pre-configured forms: Element Description, Data Flow Description, and Data Store Description. The forms are based on a JSON configuration, which can also be viewed and edited directly within the application.
 
-### Adding Form Data
-There are 3 types of forms:
-- Type A: Data Element description form
-- Type B: Data flow description form
-- Type C: Data Store description form
+-----
 
-In order to modify the form, values go to the forms.json file and edit the details. In order to add a new form, you can just copy and paste one of the samples, and make sure to update the formId. However, if you want to add a new field or remove the current ones, or even change the whole form schema, make sure you also update the ```FormTypeA.jsx```, ```FormTypeB.jsx``` or ```FormTypeC.jsx``` files in the ```src/components``` folder.
+## Features
 
-### Changing the design
-I've used tailwindcss to style the forms, you can directly modify them in the ```FormType{}.jsx``` files. Additionally, if you want to style things your own way, you can use the ```formStyles.css``` file. Be sure to uncomment the ```import "./formStyles.css";``` at the top of the corresponding ```FormType{}.jsx``` file. 
+  * **Multi-Form View:** Easily switch between three different pre-configured SAD forms.
+  * **Preview Mode:** View the forms in a clean, read-only format.
+  * **Edit Mode:** Modify form fields directly in the browser. Changes are reflected instantly and saved to the application's state.
+  * **JSON Editor:** For advanced users, a JSON view allows you to inspect and modify the entire form configuration directly.
+  * **PNG Download:** Export the currently viewed form as a PNG image for easy inclusion in documents.
 
+  
+![alt text](image.png)
+-----
+
+## Usage
+
+1.  **Select a Form:** Use the dropdown menu in the header to choose between the "Element Description," "Data Flow Description," and "Data Store Description" forms.
+2.  **View and Edit:**
+      * Click the **"Preview"** button to see the form in a read-only state.
+      * Click the **"Edit"** button to enable editing of the form fields.
+      * Click the **"JSON"** button to view and edit the underlying JSON configuration. Make sure your JSON is valid before applying changes by clicking **"Apply Changes"**.
+3.  **Download as PNG:** Click the **"Download PNG"** button to save an image of the current form.
+
+> **⚠️ Note on PNG Export:** The current PNG export functionality has a known issue where the checkmark icons inside the checkboxes are not perfectly centered in the exported image. While this issue is being worked on, we recommend using a standard screenshot tool to capture a clean image of the form if this is a concern.
+
+-----
+
+## Technical Details
+
+This project is a React application created with Vite. It uses:
+
+  * **React:** For building the user interface.
+  * **Tailwind CSS:** (Inferred from class names like `bg-blue-600`, `flex`, `p-8`) For a utility-first CSS framework to handle styling.
+  * **Lucide React:** For a collection of beautiful and customizable open-source icons.
+  * **html2canvas:** To capture the form's HTML content and render it as a canvas, which is then converted into a PNG image.
+
+-----
+
+## Installation
+
+To run this project locally, follow these steps:
+
+1.  Clone the repository:
+    ```bash
+    git clone https://github.com/your-repo-link.git
+    cd sad-form-builder
+    ```
+2.  Install the dependencies:
+    ```bash
+    npm install
+    ```
+3.  Start the development server:
+    ```bash
+    npm run dev
+    ```
+
+The application will be available at `http://localhost:5173`.
