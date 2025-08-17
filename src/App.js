@@ -142,36 +142,22 @@ const DynamicSADFormBuilder = () => {
     return (
       <div className="flex items-center">
         <div 
-          className={`w-4 h-4 border-2 mr-2 flex items-center justify-center flex-shrink-0 ${
-            checked 
-              ? 'bg-blue-600 border-blue-600' 
-              : 'bg-white border-gray-400'
-          }`}
+          className="mr-2 flex-shrink-0"
           style={{
+            width: '16px',
+            height: '16px',
+            border: checked ? '2px solid #2563eb' : '2px solid #9ca3af',
             borderRadius: '2px',
-            minWidth: '16px',
-            minHeight: '16px',
-            position: 'relative'
+            backgroundColor: checked ? '#2563eb' : 'white',
+            textAlign: 'center',
+            fontSize: '12px',
+            lineHeight: '12px',
+            color: 'white',
+            fontWeight: 'bold',
+            paddingTop: checked ? '1px' : '0'
           }}
         >
-          {checked && (
-            <span 
-              className="text-white font-bold"
-              style={{
-                fontSize: '10px',
-                lineHeight: '10px',
-                position: 'absolute',
-                top: '50%',
-                left: '50%',
-                transform: 'translate(-50%, -50%)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}
-            >
-              ✓
-            </span>
-          )}
+          {checked ? '✓' : ''}
         </div>
         <label className="text-sm capitalize select-none">{label}</label>
       </div>
