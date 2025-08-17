@@ -1,6 +1,5 @@
 import React, { useState, useRef } from 'react';
 import { Download, Plus, Trash2, Edit3, Eye, Code, Save } from 'lucide-react';
-import html2canvas from 'html2canvas';
 
 const DynamicSADFormBuilder = () => {
   const [currentView, setCurrentView] = useState('preview');
@@ -63,35 +62,53 @@ const DynamicSADFormBuilder = () => {
       return;
     }
     
-    const formElement = formRef.current;
-    // Temporarily remove box-shadow for cleaner capture
-    const originalShadow = formElement.style.boxShadow;
-    formElement.style.boxShadow = 'none';
+    // Load html2canvas from CDN if not already loaded
+    if (!window.html2canvas) {
+      const script = document.createElement('script');
+      script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+      script.onload = () => {
+        executeCapture();
+      };
+      script.onerror = () => {
+        alert('Failed to load html2canvas library. Please try again.');
+      };
+      document.head.appendChild(script);
+    } else {
+      executeCapture();
+    }
 
-    const currentConfig = formConfigs[selectedForm];
-    const filename = `SAD-Form-${currentConfig.formId}.png`;
+    function executeCapture() {
+      const formElement = formRef.current;
+      const originalShadow = formElement.style.boxShadow;
+      formElement.style.boxShadow = 'none';
 
-    html2canvas(formElement, {
-      scale: 2,
-      useCORS: true,
-      backgroundColor: '#ffffff',
-    }).then(canvas => {
-      // Restore box-shadow after capture
-      formElement.style.boxShadow = originalShadow;
+      const currentConfig = formConfigs[selectedForm];
+      const filename = `SAD-Form-${currentConfig.formId}.png`;
 
-      const image = canvas.toDataURL('image/png');
-      const link = document.createElement('a');
-      link.href = image;
-      link.download = filename;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    }).catch(error => {
-      // Restore box-shadow in case of error
-      formElement.style.boxShadow = originalShadow;
-      console.error('Error exporting to PNG:', error);
-      alert('Could not export the form as PNG. Please check the console for details.');
-    });
+      window.html2canvas(formElement, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: '#ffffff',
+        height: formElement.scrollHeight,
+        width: formElement.scrollWidth,
+        scrollX: 0,
+        scrollY: 0,
+      }).then(canvas => {
+        formElement.style.boxShadow = originalShadow;
+
+        const image = canvas.toDataURL('image/png');
+        const link = document.createElement('a');
+        link.href = image;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      }).catch(error => {
+        formElement.style.boxShadow = originalShadow;
+        console.error('Error exporting to PNG:', error);
+        alert('Could not export the form as PNG. Please check the console for details.');
+      });
+    }
   };
 
   const updateFormConfig = (formType, newConfig) => {
@@ -104,6 +121,61 @@ const DynamicSADFormBuilder = () => {
       setFormConfigs(parsed);
       setCurrentView('preview');
     } catch (error) { alert('Invalid JSON format'); }
+  };
+
+  // Improved checkbox component for better PNG export
+  const CustomCheckbox = ({ checked, onChange, label, editable = false }) => {
+    if (editable) {
+      return (
+        <div className="flex items-center">
+          <input 
+            type="checkbox" 
+            checked={checked} 
+            onChange={onChange}
+            className="mr-2 h-4 w-4 rounded text-blue-600 focus:ring-blue-500 border-gray-300" 
+          />
+          <label className="text-sm capitalize">{label}</label>
+        </div>
+      );
+    }
+
+    return (
+      <div className="flex items-center">
+        <div 
+          className={`w-4 h-4 border-2 mr-2 flex items-center justify-center flex-shrink-0 ${
+            checked 
+              ? 'bg-blue-600 border-blue-600' 
+              : 'bg-white border-gray-400'
+          }`}
+          style={{
+            borderRadius: '2px',
+            minWidth: '16px',
+            minHeight: '16px',
+            position: 'relative'
+          }}
+        >
+          {checked && (
+            <span 
+              className="text-white font-bold"
+              style={{
+                fontSize: '10px',
+                lineHeight: '10px',
+                position: 'absolute',
+                top: '50%',
+                left: '50%',
+                transform: 'translate(-50%, -50%)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}
+            >
+              ✓
+            </span>
+          )}
+        </div>
+        <label className="text-sm capitalize select-none">{label}</label>
+      </div>
+    );
   };
 
   const renderFormA = (config, editable = false) => {
@@ -199,12 +271,15 @@ const DynamicSADFormBuilder = () => {
           </div>
           <div className="mt-4 flex">
             <span className="font-bold w-40 pt-1"></span>
-            <div className="grid grid-cols-2 gap-x-8 gap-y-2 flex-1">
+            <div className="grid grid-cols-2 gap-x-8 gap-y-3 flex-1">
               {Object.entries(fields.dataTypes).map(([type, checked]) => (
-                <div key={type} className="flex items-center">
-                  {editable ? <input type="checkbox" checked={checked} onChange={(e) => updateFormConfig('A', { ...config, fields: { ...fields, dataTypes: { ...fields.dataTypes, [type]: e.target.checked } } })} className="mr-2 h-4 w-4 rounded text-blue-600 focus:ring-blue-500 border-gray-300" /> : <div className={`w-4 h-4 border-2 mr-2 flex items-center justify-center rounded-sm ${ checked ? 'bg-blue-600 border-blue-600' : 'bg-white border-gray-400' }`}>{checked && <span className="text-white text-xs font-bold">✓</span>}</div>}
-                  <label className="text-sm capitalize">{type}</label>
-                </div>
+                <CustomCheckbox
+                  key={type}
+                  checked={checked}
+                  onChange={(e) => updateFormConfig('A', { ...config, fields: { ...fields, dataTypes: { ...fields.dataTypes, [type]: e.target.checked } } })}
+                  label={type}
+                  editable={editable}
+                />
               ))}
             </div>
           </div>
@@ -271,23 +346,15 @@ const DynamicSADFormBuilder = () => {
 
         <div className="flex">
           <span className="font-bold w-40">Type of data flow</span>
-          <div className="grid grid-cols-2 gap-x-8 gap-y-2 flex-1">
+          <div className="grid grid-cols-2 gap-x-8 gap-y-3 flex-1">
             {Object.entries(fields.dataFlowTypes).map(([type, checked]) => (
-              <div key={type} className="flex items-center">
-                {editable ? (
-                  <input
-                    type="checkbox"
-                    checked={checked}
-                    onChange={(e) => updateFormConfig('B', { ...config, fields: { ...fields, dataFlowTypes: { ...fields.dataFlowTypes, [type]: e.target.checked } } })}
-                    className="mr-2 h-4 w-4 rounded text-blue-600 focus:ring-blue-500"
-                  />
-                ) : (
-                  <div className={`w-4 h-4 border-2 mr-2 flex items-center justify-center rounded-sm ${ checked ? 'bg-blue-600 border-blue-600' : 'bg-white border-gray-400' }`}>
-                    {checked && <span className="text-white text-xs font-bold">✓</span>}
-                  </div>
-                )}
-                <label className="text-sm capitalize">{type}</label>
-              </div>
+              <CustomCheckbox
+                key={type}
+                checked={checked}
+                onChange={(e) => updateFormConfig('B', { ...config, fields: { ...fields, dataFlowTypes: { ...fields.dataFlowTypes, [type]: e.target.checked } } })}
+                label={type}
+                editable={editable}
+              />
             ))}
           </div>
         </div>
@@ -362,23 +429,15 @@ const DynamicSADFormBuilder = () => {
           
           <div className="mt-4 flex">
             <span className="font-bold w-40">Access Types</span>
-            <div className="flex flex-wrap gap-x-8 gap-y-2 flex-1">
+            <div className="flex flex-wrap gap-x-8 gap-y-3 flex-1">
               {Object.entries(fields.accessTypes).map(([type, checked]) => (
-                <div key={type} className="flex items-center">
-                  {editable ? (
-                    <input
-                      type="checkbox"
-                      checked={checked}
-                      onChange={(e) => updateFormConfig('C', { ...config, fields: { ...fields, accessTypes: { ...fields.accessTypes, [type]: e.target.checked } } })}
-                      className="mr-2 h-4 w-4 rounded text-blue-600 focus:ring-blue-500"
-                    />
-                  ) : (
-                    <div className={`w-4 h-4 border-2 mr-2 flex items-center justify-center rounded-sm ${ checked ? 'bg-blue-600 border-blue-600' : 'bg-white border-gray-400' }`}>
-                      {checked && <span className="text-white text-xs font-bold">✓</span>}
-                    </div>
-                  )}
-                  <label className="text-sm capitalize">{type}</label>
-                </div>
+                <CustomCheckbox
+                  key={type}
+                  checked={checked}
+                  onChange={(e) => updateFormConfig('C', { ...config, fields: { ...fields, accessTypes: { ...fields.accessTypes, [type]: e.target.checked } } })}
+                  label={type}
+                  editable={editable}
+                />
               ))}
             </div>
           </div>
